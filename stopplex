@@ -1,0 +1,8 @@
+#kodi-send -a "quit" commented out but used in case you want to quit KODI as to not block same libary if shared with plex
+docker stop plex
+docker remove plex
+#sudo umount /media/habiwan/5TBUSB1
+#sleep 25
+#killall emulationstation
+#ls -lart /media/habiwan
+#startx
