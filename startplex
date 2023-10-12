@@ -1,0 +1,54 @@
+#!/bin/bash 
+
+# script will ALWAYS remove plex docker container
+# then if 5TB is mounted will run latest plex docker image
+# sleep 120 : written by S.H. and J.P in 2023
+# the distilled command is: docker run -d --name=plex --net=host -e PUID=1000 -e PGID=1000 -e TZ=Europe/London -e VERSION=docker -v /media/$USER/5TBUSB/plex/config:/config -v /media/$USER/5TBUSB/plex/data:/data --restart unless-stopped lscr.io/linuxserver/plex:latest
+# restart unless stopped may not be desirable!!!
+
+# docker container ps -a | grep -c "lscr.io/linuxserver/plex:latest" 
+# gives count of plexes ruining
+
+# protection: if is running and mount exists it does not run!!
+
+## mod: added /$USER as "needs to exist-folder" so HDDs can be monitored, i.e. Spain got to have a pi folder or both both
+
+FILE=/media/$USER/5TBUSB/$USER
+
+numDockerRunning=`docker container ps | grep -c "lscr.io/linuxserver/plex:latest"`
+numDockerExists=`docker container ps -a | grep -c "lscr.io/linuxserver/plex:latest"`
+
+if [ "$numDockerRunning" -gt "0" ] ; then
+	echo "Plex is running"
+	if test -d "$FILE"; then
+		echo "And Mount exists! ALL OK"
+	else
+		echo "...but you did not mount the USBHDTB DUMASS!!!!"
+		docker stop plex
+		docker remove plex
+		echo "I stopped the docker plex image for you and deleted it... now sudo delete the false /media mount and connect the 5TBUSB properly!!!....runmeagain"
+		sudo rm -rf /media/$USER/5TBUSB
+	fi
+	exit 0
+else
+	if [ "$numDockerExists" -gt "0" ] ; then
+		echo "Plex is stopped but not deleted!!!"
+		if test -d "$FILE"; then
+			echo "And Mount exists! will remove stopped plex"
+			docker remove plex
+		else
+			clear
+			echo "5TBUSB is NOT mounted!!! removing image, mount the mf dumass"
+			docker remove plex
+			exit 0
+		fi
+	fi
+fi
+
+if test -d "$FILE"; then
+	docker run -d --name=plex --net=host -e PUID=1000 -e PGID=1000 -e TZ=Europe/London -e VERSION=docker -v /media/$USER/5TBUSB/plex/config:/config -v /media/$USER/5TBUSB/plex/data:/data lscr.io/linuxserver/plex:latest
+else
+	clear
+	echo "5TBUSB is NOT mounted!!! mount the mf dumass!!!"
+	exit 0
+fi
